@@ -3,7 +3,10 @@
  * Séparation des responsabilités : Controller → Service → Model
  */
 
+import sequelize from "../db/connection.js";
 import User from "../models/User.js";
+import Film from "../models/Film.js";
+import JuryRating from "../models/JuryRating.js";
 import { hashPassword } from "../utils/password.js";
 import { AppError } from "../middlewares/errorHandler.js";
 import logger from "../utils/logger.js";
@@ -11,18 +14,46 @@ import { Op } from "sequelize";
 
 class UserService {
   /**
-   * @bref Récupère tous les utilisateurs
+   * @bref Récupère tous les utilisateurs avec activité (films soumis, votes jury)
    * @returns {Promise<any[]>}
    */
   async getAllUsers() {
     try {
       const users = await User.findAll({
-        /**
-         * @bref Ne pas retourner les mots de passe
-         */
         attributes: { exclude: ["password"] },
       });
-      return users;
+
+      /**
+       * @bref Comptage des films par userId (réalisateurs)
+       */
+      const filmCounts = await Film.findAll({
+        attributes: ["userId", [sequelize.fn("COUNT", sequelize.col("id")), "count"]],
+        group: ["userId"],
+        raw: true,
+      });
+
+      /**
+       * @bref Comptage des notes jury par userId
+       */
+      const juryRatingCounts = await JuryRating.findAll({
+        attributes: ["userId", [sequelize.fn("COUNT", sequelize.col("id")), "count"]],
+        group: ["userId"],
+        raw: true,
+      });
+
+      const filmsByUserId = Object.fromEntries(
+        filmCounts.map((r) => [r.userId ?? r.user_id, Number(r.count)])
+      );
+      const votesByUserId = Object.fromEntries(
+        juryRatingCounts.map((r) => [r.userId ?? r.user_id, Number(r.count)])
+      );
+
+      return users.map((u) => {
+        const json = u.toJSON ? u.toJSON() : u;
+        json.filmsSubmitted = filmsByUserId[u.id] ?? 0;
+        json.votesCompleted = votesByUserId[u.id] ?? 0;
+        return json;
+      });
     } catch (error) {
       logger.error("Error fetching users", { error: error.message });
       throw new AppError("Erreur lors de la récupération des utilisateurs", 500);

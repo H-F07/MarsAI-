@@ -7,6 +7,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./styles/index.css";
 import Home from "./pages/public/Home.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
+import AdminUsersPage from "./pages/admin/Users.jsx";
+import Submissions from "./pages/admin/Submissions.jsx";
+import Moderation from "./pages/admin/Moderation.jsx";
+import Leaderboard from "./pages/admin/Leaderboard.jsx";
+import Events from "./pages/admin/Events.jsx";
+import JuryManagement from "./pages/admin/JuryManagement.jsx";
+import Settings from "./pages/admin/Settings.jsx";
+import CMS from "./pages/admin/CMS.jsx";
+import EditEvent from "./pages/admin/EditEvent.jsx";
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import PublicLayout from "./layouts/PublicLayout.jsx";
 import { Login } from "./pages/auth/Login.jsx";
@@ -15,11 +24,10 @@ import { RoleGuard } from "./middlewares/RoleGuard.jsx";
 import Agenda from "./pages/public/Agenda.jsx";
 import Discover from "./pages/public/Discover.jsx";
 import Competition from "./pages/public/Competition.jsx";
-import Profile from "./pages/public/Profile.jsx"; 
+import Profile from "./pages/public/Profile.jsx";
 import JuryDashboard from "./pages/admin/JuryDashboard.jsx";
 import UploadPage from "./pages/public/Upload.jsx";
 import JuryVotePage from "./pages/jury/jury-page.jsx";
-
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,7 +56,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="/jury/:filmId" element={<JuryVotePage />} />
           </Route>
 
-          {/* Routes privées */}
+          {/* Routes admin */}
           <Route
             path="admin"
             element={
@@ -58,6 +66,16 @@ createRoot(document.getElementById("root")).render(
             }
           >
             <Route index element={<Dashboard />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="submissions" element={<Submissions />} />
+            <Route path="moderation" element={<Moderation />} />
+            <Route path="leaderboard" element={<Leaderboard />} />
+            <Route path="events" element={<Events />} />
+            <Route path="events/new" element={<EditEvent />} />
+            <Route path="events/:id/edit" element={<EditEvent />} />
+            <Route path="jury" element={<JuryManagement />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="cms" element={<CMS />} />
           </Route>
         </Routes>
       </QueryClientProvider>

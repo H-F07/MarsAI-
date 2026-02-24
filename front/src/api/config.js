@@ -6,18 +6,39 @@ const instance = axios.create({
 });
 
 instance.interceptors.request.use(
-  async (config) => {
+  (config) => {
     const token = localStorage.getItem("token");
-
-    if (token !== null) {
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
+  (error) => Promise.reject(error),
+);
+
+instance.interceptors.response.use(
+  (response) => response,
   (error) => {
-    console.log("une erreur est survenue:", error);
-    return Promise.reject(new Error(error));
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+
+      localStorage.removeItem("username");
+      localStorage.removeItem("role");
+      localStorage.removeItem("userId");
+      if (window.location.pathname !== "/auth/login") {
+        window.location.href = "/auth/login";
+      }
+    }
+    if (error.response?.status === 403) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("role");
+      localStorage.removeItem("userId");
+      if (window.location.pathname !== "/auth/login") {
+        window.location.href = "/auth/login?reason=forbidden";
+      }
+    }
+    return Promise.reject(error);
   },
 );
 
