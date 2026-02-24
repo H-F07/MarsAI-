@@ -19,7 +19,10 @@ const Notification = sequelize.define(
         "FILM_VALIDATED",
         "FILM_REJECTED",
         "SELECTION_OFFICIELLE",
-        "EVENT_REMINDER"
+        "EVENT_REMINDER",
+        "VIDEO_UPLOAD_APPROVED",
+        "VIDEO_UPLOAD_REJECTED",
+        "VIDEO_UPLOAD_FAILED"
       ),
       allowNull: false,
     },

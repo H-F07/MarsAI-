@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 
 import { login } from "../../api/auth.js";
 import { useMutation } from "@tanstack/react-query";
@@ -24,7 +24,9 @@ export function Login() {
     );
   }
 
-  let navigate = useNavigate();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const reasonForbidden = searchParams.get("reason") === "forbidden";
 
   const { register, handleSubmit } = useForm({
     resolver: zodResolver(loginSchema),
@@ -34,26 +36,28 @@ export function Login() {
     mutationFn: async (data) => {
       return await login(data);
     },
-    onSuccess: (response, variables, context) => {
-      // If you are logged
-      localStorage.setItem("username", response.data?.username);
-      localStorage.setItem("role", response.data?.role);
-      localStorage.setItem("token", response.data?.token);
+    onSuccess: (response) => {
+      const { user, token } = response.data;
 
-      switch (response.data?.role) {
+      localStorage.setItem("username", user.username);
+      localStorage.setItem("role", user.role);
+      localStorage.setItem("userId", String(user.id));
+      localStorage.setItem("token", token);
+
+      switch (user.role) {
         case "ADMIN":
           navigate("/admin");
           break;
         case "JURY":
-          navigate("/");
+          navigate("/jury-dashboard");
           break;
         default:
           navigate("/");
           break;
       }
     },
-    onError: (error, variables, context) => {
-      alert(error.response?.data?.error);
+    onError: (error) => {
+      alert(error.response?.data?.message || "Identifiants invalides");
     },
   });
 
@@ -63,6 +67,12 @@ export function Login() {
   return (
     <>
       <h1 className="text-2xl">Login</h1>
+
+      {reasonForbidden && (
+        <p className="mb-4 p-3 bg-amber-500/20 border border-amber-500/40 text-amber-200 rounded-lg text-sm">
+          Accès refusé. Vos droits ont peut-être changé — reconnectez-vous avec un compte administrateur pour accéder à l’admin.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <input type="hidden" id="id" {...register("id")} />

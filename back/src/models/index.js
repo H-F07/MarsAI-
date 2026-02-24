@@ -6,7 +6,6 @@
 import sequelize from "../db/connection.js";
 import User from "./User.js";
 import Film from "./Film.js";
-import Video from "./Video.js";
 import JuryRating from "./JuryRating.js";
 import NewsletterSubscriber from "./NewsletterSubscriber.js";
 import Event from "./Event.js";
@@ -68,7 +67,6 @@ export {
   sequelize,
   User,
   Film,
-  Video,
   JuryRating,
   NewsletterSubscriber,
   Event,
@@ -81,7 +79,6 @@ export default {
   sequelize,
   User,
   Film,
-  Video,
   JuryRating,
   NewsletterSubscriber,
   Event,

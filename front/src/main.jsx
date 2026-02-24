@@ -17,6 +17,7 @@ import Discover from "./pages/public/Discover.jsx";
 import Competition from "./pages/public/Competition.jsx";
 import Profile from "./pages/public/Profile.jsx"; 
 import JuryDashboard from "./pages/admin/JuryDashboard.jsx";
+import UploadPage from "./pages/public/Upload.jsx";
 
 
 const queryClient = new QueryClient({
@@ -42,6 +43,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="/Profile" element={<Profile />} />
             <Route path="/auth/register" element={<Register />} />
             <Route path="/jury-dashboard" element={<JuryDashboard />} />
+            <Route path="/upload" element={<UploadPage />} />
           </Route>
 
           {/* Routes privées */}

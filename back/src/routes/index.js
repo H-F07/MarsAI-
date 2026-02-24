@@ -7,6 +7,8 @@ import userRouter from "./User.route.js";
 import videoRouter from "./Video.route.js";
 import filmRouter from "./Film.route.js";
 import authRouter from "./Auth.route.js";
+import eventRouter from "./Event.route.js";
+import notificationRouter from "./Notification.route.js";
 
 const router = express.Router();
 
@@ -20,6 +22,8 @@ router.use("/users", userRouter);
  */
 router.use("/videos", videoRouter);
 router.use("/films", filmRouter);
+router.use("/events", eventRouter);
+router.use("/notifications", notificationRouter);
 
 /**
  * @bref Route de santé (health check)
