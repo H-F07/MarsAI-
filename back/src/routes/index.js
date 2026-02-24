@@ -9,6 +9,7 @@ import filmRouter from "./Film.route.js";
 import authRouter from "./Auth.route.js";
 import eventRouter from "./Event.route.js";
 import notificationRouter from "./Notification.route.js";
+import juryRatingRouter from "./JuryRating.route.js";
 
 const router = express.Router();
 
@@ -24,6 +25,10 @@ router.use("/videos", videoRouter);
 router.use("/films", filmRouter);
 router.use("/events", eventRouter);
 router.use("/notifications", notificationRouter);
+/**
+ * @bref Votes du jury (JURY → soumettre/modifier, ADMIN → délibération)
+ */
+router.use("/jury-ratings", juryRatingRouter);
 
 /**
  * @bref Route de santé (health check)

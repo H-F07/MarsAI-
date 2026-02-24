@@ -16,4 +16,11 @@ async function updateFilmStatus(id, data) {
   return await instance.patch(`films/${id}/status`, data);
 }
 
+/**
+ * Récupère les films en sélection officielle (route publique)
+ * Retourne un tableau de films avec User inclus
+ */
+export const fetchSelectionOfficielle = () =>
+  instance.get("/films/selection-officielle");
+
 export { getFilms, getFilmById, getSelectionOfficielle, updateFilmStatus };

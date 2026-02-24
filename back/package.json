@@ -8,6 +8,8 @@
     "db:diagnose": "node ./scripts/db-diagnose.js",
     "db:reset": "node ./scripts/db-reset.js",
     "db:migrate-video-failed": "node ./scripts/migrate-video-upload-failed.js",
+    "db:seed": "node ./src/seeds/seeds.js",
+    "db:fresh": "node ./src/seeds/seeds.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
