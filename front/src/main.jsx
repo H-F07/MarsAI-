@@ -1,5 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { I18nextProvider } from "react-i18next";
+import i18n from "./src/i18n";
 
 import { BrowserRouter, Route, Routes } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -39,46 +41,48 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <Routes>
-          {/* Routes publiques */}
-          <Route path="/" element={<PublicLayout />}>
-            <Route index element={<Home />} />
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/discover" element={<Discover />} />
-            <Route path="/competition" element={<Competition />} />
-            <Route path="/Agenda" element={<Agenda />} />
-            <Route path="/Profile" element={<Profile />} />
-            <Route path="/auth/register" element={<Register />} />
-            <Route path="/jury-dashboard" element={<JuryDashboard />} />
-            <Route path="/upload" element={<UploadPage />} />
-            <Route path="/jury/:filmId" element={<JuryVotePage />} />
-          </Route>
+    <I18nextProvider i18n={i18n}>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <Routes>
+            {/* Routes publiques */}
+            <Route path="/" element={<PublicLayout />}>
+              <Route index element={<Home />} />
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/discover" element={<Discover />} />
+              <Route path="/competition" element={<Competition />} />
+              <Route path="/Agenda" element={<Agenda />} />
+              <Route path="/Profile" element={<Profile />} />
+              <Route path="/auth/register" element={<Register />} />
+              <Route path="/jury-dashboard" element={<JuryDashboard />} />
+              <Route path="/upload" element={<UploadPage />} />
+              <Route path="/jury/:filmId" element={<JuryVotePage />} />
+            </Route>
 
-          {/* Routes admin */}
-          <Route
-            path="admin"
-            element={
-              <RoleGuard allowedRoles={["ADMIN"]}>
-                <AdminLayout />
-              </RoleGuard>
-            }
-          >
-            <Route index element={<Dashboard />} />
-            <Route path="users" element={<AdminUsersPage />} />
-            <Route path="submissions" element={<Submissions />} />
-            <Route path="moderation" element={<Moderation />} />
-            <Route path="leaderboard" element={<Leaderboard />} />
-            <Route path="events" element={<Events />} />
-            <Route path="events/new" element={<EditEvent />} />
-            <Route path="events/:id/edit" element={<EditEvent />} />
-            <Route path="jury" element={<JuryManagement />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="cms" element={<CMS />} />
-          </Route>
-        </Routes>
-      </QueryClientProvider>
-    </BrowserRouter>
+            {/* Routes admin */}
+            <Route
+              path="admin"
+              element={
+                <RoleGuard allowedRoles={["ADMIN"]}>
+                  <AdminLayout />
+                </RoleGuard>
+              }
+            >
+              <Route index element={<Dashboard />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="submissions" element={<Submissions />} />
+              <Route path="moderation" element={<Moderation />} />
+              <Route path="leaderboard" element={<Leaderboard />} />
+              <Route path="events" element={<Events />} />
+              <Route path="events/new" element={<EditEvent />} />
+              <Route path="events/:id/edit" element={<EditEvent />} />
+              <Route path="jury" element={<JuryManagement />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="cms" element={<CMS />} />
+            </Route>
+          </Routes>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </I18nextProvider>
   </StrictMode>,
 );

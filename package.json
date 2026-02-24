@@ -12,5 +12,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "i18next": "^25.8.5",
+    "react-i18next": "^16.5.4"
+  }
 }

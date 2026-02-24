@@ -1,5 +1,6 @@
 import { Outlet } from "react-router";
 import { TopBar } from "./TopBar";
+import { BottomNavigation } from "./BottomNavBar";
 
 export default function PublicLayout() {
   return (
@@ -8,6 +9,7 @@ export default function PublicLayout() {
       <main className="mt-52">  
         <Outlet />
       </main>
+      <BottomNavigation></BottomNavigation>
       <footer>Footer</footer>
     </div>
   );

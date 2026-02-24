@@ -1,10 +1,12 @@
-import React from 'react';
+import { useTranslation } from "react-i18next";
 
 export default function Agenda() {
-    return (
-        <div style={{ padding: '20px' }}>
-            <h1>Agenda</h1>
-            <p>Welcome to the Agenda page</p>
-        </div>
-    );
+  const { t } = useTranslation();
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>{t("pages.agenda.title")}</h1>
+      <p>{t("pages.agenda.description")}</p>
+    </div>
+  );
 }
