@@ -135,13 +135,16 @@ export function TopBar() {
             )}
           </div>
 
-          {/* Mobile: Simple burger menu */}
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2.5 text-white/50 hover:text-white transition-colors cursor-pointer bg-white/5 rounded-full border border-white/5"
-          >
-            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {/* Mobile: notifications + burger menu */}
+          <div className="md:hidden flex items-center gap-2">
+            {isAuthenticated ? <NotificationDropdown /> : null}
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2.5 text-white/50 hover:text-white transition-colors cursor-pointer bg-white/5 rounded-full border border-white/5"
+            >
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
 
         </div>
       </motion.div>
@@ -187,9 +190,6 @@ export function TopBar() {
                         {username}
                       </div>
                     )}
-                    <div className="px-4 py-2 flex justify-center">
-                      <NotificationDropdown />
-                    </div>
                     <button 
                       onClick={handleLogout}
                       className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-[16px] bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-sm uppercase tracking-wider hover:bg-red-500/20 transition-all cursor-pointer"

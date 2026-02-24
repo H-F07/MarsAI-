@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "motion/react";
-import { Bell, Check, X, CheckCheck, Trash2, Video, Film, Calendar, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion } from "motion/react";
+import { Bell, Check, X, CheckCheck, Trash2, Film, Calendar, AlertCircle } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification, createTestNotification } from "../api/notifications.js";
+import { MobileBottomDrawer } from "./MobileBottomDrawer.jsx";
 
 function getNotificationIcon(type) {
   switch (type) {
@@ -26,9 +26,7 @@ function getNotificationIcon(type) {
 
 export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const buttonRef = useRef(null);
-  const [dropdownRect, setDropdownRect] = useState({ top: 0, right: 0 });
+  const [isMobile, setIsMobile] = useState(false);
   const queryClient = useQueryClient();
 
   // Vérifier si l'utilisateur est connecté
@@ -102,34 +100,18 @@ export function NotificationDropdown() {
     return null;
   }
 
-  // Mettre à jour la position du dropdown quand on ouvre
   useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownRect({
-        top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-        left: rect.left,
-      });
-    }
-  }, [isOpen]);
+    const updateIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
 
-  // Fermer le dropdown si on clique en dehors
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target) && buttonRef.current && !buttonRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    updateIsMobile();
+    window.addEventListener("resize", updateIsMobile);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", updateIsMobile);
     };
-  }, [isOpen]);
+  }, []);
 
   const handleMarkAsRead = (notificationId, e) => {
     e.stopPropagation();
@@ -145,112 +127,90 @@ export function NotificationDropdown() {
     markAllAsReadMutation.mutate();
   };
 
-  const dropdownPanel = isOpen ? (
-    <AnimatePresence>
-      <motion.div
-        ref={dropdownRef}
-        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-        transition={{ duration: 0.2 }}
-        style={{
-          position: "fixed",
-          top: dropdownRect.top,
-          right: dropdownRect.right,
-          width: "min(24rem, calc(100vw - 2rem))",
-          maxHeight: "600px",
-        }}
-        className="w-96 max-w-[calc(100vw-2rem)] max-h-[600px] bg-[#0a0a0a] backdrop-blur-[40px] border border-white/10 rounded-[24px] shadow-2xl shadow-black/60 overflow-hidden z-[9999]"
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => testNotificationMutation.mutate()}
+        disabled={testNotificationMutation.isPending}
+        title="Créer une notification de test"
+        className="text-[10px] font-black uppercase tracking-widest text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50"
       >
-            {/* Header */}
-            <div className="p-4 border-b border-white/10 flex items-center justify-between">
-              <h3 className="text-sm font-black uppercase tracking-widest text-white">Notifications</h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => testNotificationMutation.mutate()}
-                  disabled={testNotificationMutation.isPending}
-                  title="Créer une notification de test"
-                  className="text-[10px] font-black uppercase tracking-widest text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50"
-                >
-                  Test
-                </button>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={handleMarkAllAsRead}
-                    disabled={markAllAsReadMutation.isPending}
-                    className="text-[10px] font-black uppercase tracking-widest text-[#51A2FF] hover:text-[#51A2FF]/80 transition-colors disabled:opacity-50 flex items-center gap-1"
-                  >
-                    <CheckCheck className="w-3 h-3" />
-                    Tout marquer lu
-                  </button>
-                )}
-              </div>
-            </div>
+        Test
+      </button>
+      {unreadCount > 0 && (
+        <button
+          onClick={handleMarkAllAsRead}
+          disabled={markAllAsReadMutation.isPending}
+          className="text-[10px] font-black uppercase tracking-widest text-[#51A2FF] hover:text-[#51A2FF]/80 transition-colors disabled:opacity-50 flex items-center gap-1"
+        >
+          <CheckCheck className="w-3 h-3" />
+          Tout marquer lu
+        </button>
+      )}
+    </div>
+  );
 
-            {/* Notifications List */}
-            <div className="max-h-[500px] overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Bell className="w-12 h-12 text-white/20 mx-auto mb-3" />
-                  <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Aucune notification</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-white/5">
-                  {notifications.map((notification) => {
-                    const { icon: Icon, color } = getNotificationIcon(notification.type);
-                    return (
-                      <motion.div
-                        key={notification.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className={`p-4 hover:bg-white/5 transition-all group ${!notification.read ? "bg-white/[0.02]" : ""}`}
+  const notificationsList = (
+    <>
+      {notifications.length === 0 ? (
+        <div className="p-8 text-center">
+          <Bell className="w-12 h-12 text-white/20 mx-auto mb-3" />
+          <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Aucune notification</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-white/5">
+          {notifications.map((notification) => {
+            const { icon: Icon, color } = getNotificationIcon(notification.type);
+            return (
+              <motion.div
+                key={notification.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={`p-4 hover:bg-white/5 transition-all group ${!notification.read ? "bg-white/[0.02]" : ""}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-xl bg-white/5 border border-white/10 shrink-0 ${color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h4 className="text-sm font-black text-white">{notification.title || "Notification"}</h4>
+                      {!notification.read && (
+                        <div className="w-2 h-2 bg-[#51A2FF] rounded-full shrink-0 mt-1" />
+                      )}
+                    </div>
+                    <p className="text-xs text-white/60 mb-2">{notification.message}</p>
+                    <div className="flex items-center gap-2">
+                      {!notification.read && (
+                        <button
+                          onClick={(e) => handleMarkAsRead(notification.id, e)}
+                          className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-[#51A2FF] transition-colors flex items-center gap-1"
+                        >
+                          <Check className="w-3 h-3" />
+                          Marquer lu
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => handleDelete(notification.id, e)}
+                        className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-red-400 transition-colors flex items-center gap-1"
                       >
-                        <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-xl bg-white/5 border border-white/10 shrink-0 ${color}`}>
-                            <Icon className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 mb-1">
-                              <h4 className="text-sm font-black text-white">{notification.title || "Notification"}</h4>
-                              {!notification.read && (
-                                <div className="w-2 h-2 bg-[#51A2FF] rounded-full shrink-0 mt-1" />
-                              )}
-                            </div>
-                            <p className="text-xs text-white/60 mb-2">{notification.message}</p>
-                            <div className="flex items-center gap-2">
-                              {!notification.read && (
-                                <button
-                                  onClick={(e) => handleMarkAsRead(notification.id, e)}
-                                  className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-[#51A2FF] transition-colors flex items-center gap-1"
-                                >
-                                  <Check className="w-3 h-3" />
-                                  Marquer lu
-                                </button>
-                              )}
-                              <button
-                                onClick={(e) => handleDelete(notification.id, e)}
-                                className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-red-400 transition-colors flex items-center gap-1"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                Supprimer
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+                        <Trash2 className="w-3 h-3" />
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-      </motion.div>
-    </AnimatePresence>
-  ) : null;
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
 
   return (
     <div className="relative">
       <button
-        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className="relative flex items-center justify-center p-2 rounded-full hover:bg-white/10 transition-all cursor-pointer group"
         title="Notifications"
@@ -267,7 +227,17 @@ export function NotificationDropdown() {
         )}
       </button>
 
-      {isOpen && createPortal(dropdownPanel, document.body)}
+      <MobileBottomDrawer
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Notifications"
+        description="Ton centre de notifications"
+        direction={isMobile ? "bottom" : "right"}
+        maxWidthClassName="max-w-2xl md:max-w-md"
+      >
+        <div className="p-4 border-b border-white/10 flex items-center justify-end">{headerActions}</div>
+        <div className={`${isMobile ? "max-h-[70vh]" : "h-[calc(100vh-116px)]"} overflow-y-auto pb-4`}>{notificationsList}</div>
+      </MobileBottomDrawer>
     </div>
   );
 }
