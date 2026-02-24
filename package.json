@@ -6,7 +6,8 @@
   "scripts": {
     "back": "cd back && npm start",
     "front": "cd front && npm run dev",
-    "install": "cd back && npm install && cd ../front && npm install"
+    "install": "cd back && npm install && cd ../front && npm install",
+    "seed": "cd back && node src/seeds/seeds.js"
   },
   "keywords": [],
   "author": "",

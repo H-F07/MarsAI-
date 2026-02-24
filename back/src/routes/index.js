@@ -7,6 +7,7 @@ import userRouter from "./User.route.js";
 import videoRouter from "./Video.route.js";
 import filmRouter from "./Film.route.js";
 import authRouter from "./Auth.route.js";
+import juryRatingRouter from "./JuryRating.route.js";
 
 const router = express.Router();
 
@@ -20,6 +21,10 @@ router.use("/users", userRouter);
  */
 router.use("/videos", videoRouter);
 router.use("/films", filmRouter);
+/**
+ * @bref Votes du jury (JURY → soumettre/modifier, ADMIN → délibération)
+ */
+router.use("/jury-ratings", juryRatingRouter);
 
 /**
  * @bref Route de santé (health check)

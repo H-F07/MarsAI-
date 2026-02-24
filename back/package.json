@@ -7,6 +7,8 @@
     "start": "nodemon index.js",
     "db:diagnose": "node ./scripts/db-diagnose.js",
     "db:reset": "node ./scripts/db-reset.js",
+    "db:seed": "node ./src/seeds/seeds.js",
+    "db:fresh": "node ./src/seeds/seeds.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

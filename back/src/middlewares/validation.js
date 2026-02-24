@@ -106,19 +106,24 @@ export const validateDuration = (req, res, next) => {
 };
 
 /**
- * @bref Valide le score du jury (1-10)
+ * @bref Valide la note qualitative du jury (4 étapes)
+ * Valeurs acceptées : TRES_BIEN | BIEN | BOF | JAIME_PAS
  * @param {any} req - Requête Express
  * @param {any} res - Réponse Express
  * @param {Function} next - Next middleware
  * @returns {void}
  */
-export const validateScore = (req, res, next) => {
+export const validateRating = (req, res, next) => {
+  const VALID_RATINGS = ["TRES_BIEN", "BIEN", "BOF", "JAIME_PAS"];
   if (req.body.score !== undefined) {
-    const score = parseInt(req.body.score);
-    if (isNaN(score) || score < 1 || score > 10) {
-      return next(new AppError("Score invalide (1-10)", 400));
+    if (!VALID_RATINGS.includes(req.body.score)) {
+      return next(
+        new AppError(
+          `Note invalide. Valeurs acceptées : ${VALID_RATINGS.join(", ")}`,
+          400
+        )
+      );
     }
-    req.body.score = score;
   }
   next();
 };
