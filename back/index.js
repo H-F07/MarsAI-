@@ -38,12 +38,21 @@ sequelize
   .then(() => {
     logger.info("Base de données synchronisée");
 
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       logger.info("Serveur démarré", { port: PORT, env: process.env.NODE_ENV || "development" });
       console.log("-----------------------------");
       console.log("--     🪐 marsAI Platform 🪐     --");
       console.log("-----------------------------");
       console.log(`Serveur lancé sur http://localhost:${PORT}`);
+    });
+
+    server.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        logger.error(`❌  Port ${PORT} déjà utilisé — tue le process : lsof -ti:${PORT} | xargs kill`);
+      } else {
+        logger.error("Erreur serveur", { error: err.message });
+      }
+      process.exit(1);
     });
   })
   .catch((err) => {

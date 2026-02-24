@@ -25,7 +25,7 @@ const upload = multer({
   },
 });
 
-// ─── Scaleway S3 ──────────────────────────────────────────────────────────────
+// ─── Routes ───────────────────────────────────────────────────────────────────
 
 /**
  * POST /api/videos/upload
@@ -59,5 +59,10 @@ videoRouter.delete("/delete", VideoController.deleteVideo);
  * Récupère le statut d'un upload vidéo (copyright check)
  */
 videoRouter.get("/upload/:id/status", VideoController.getUploadStatus);
+/**
+ * GET /api/videos/status/:id
+ * Alias de compatibilité pour le statut d'upload vidéo
+ */
+videoRouter.get("/status/:id", VideoController.getUploadStatus);
 
 export default videoRouter;
