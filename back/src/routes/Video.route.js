@@ -24,11 +24,7 @@ const upload = multer({
   },
 });
 
-// ─── Legacy ───────────────────────────────────────────────────────────────────
-videoRouter.get("/", VideoController.getVideos);
-videoRouter.post("/", VideoController.createVideo);
-
-// ─── Scaleway S3 ──────────────────────────────────────────────────────────────
+// ─── Routes ───────────────────────────────────────────────────────────────────
 
 /**
  * POST /api/videos/upload
@@ -55,5 +51,11 @@ videoRouter.get("/download", VideoController.downloadVideo);
  * Body: { key: "grp1/uuid.mp4" }
  */
 videoRouter.delete("/delete", VideoController.deleteVideo);
+
+/**
+ * GET /api/videos/status/:id
+ * Retourne le statut de traitement et de vérification copyright d'un upload
+ */
+videoRouter.get("/status/:id", VideoController.getUploadStatus);
 
 export default videoRouter;

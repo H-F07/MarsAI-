@@ -7,6 +7,7 @@ import sequelize from "../db/connection.js";
 import User from "./User.js";
 import Film from "./Film.js";
 import Video from "./Video.js";
+import VideoUpload from "./VideoUpload.js";
 import JuryRating from "./JuryRating.js";
 import NewsletterSubscriber from "./NewsletterSubscriber.js";
 import Event from "./Event.js";
@@ -64,11 +65,18 @@ EventRegistration.belongsTo(User, {
 User.hasMany(Notification, { foreignKey: "userId" });
 Notification.belongsTo(User, { foreignKey: "userId" });
 
+/**
+ * @bref User <-> VideoUpload
+ */
+User.hasMany(VideoUpload, { foreignKey: "userId" });
+VideoUpload.belongsTo(User, { foreignKey: "userId" });
+
 export {
   sequelize,
   User,
   Film,
   Video,
+  VideoUpload,
   JuryRating,
   NewsletterSubscriber,
   Event,
@@ -82,6 +90,7 @@ export default {
   User,
   Film,
   Video,
+  VideoUpload,
   JuryRating,
   NewsletterSubscriber,
   Event,

@@ -31,7 +31,8 @@ const s3Client = new S3Client({
 // ─── YouTube ─────────────────────────────────────────────────────────────────
 
 /**
- * @bref Crée un client OAuth2 YouTube authentifié via refresh token
+ * @brief Crée un client YouTube OAuth2 authentifié
+ * @returns {google.youtube} Client YouTube authentifié
  */
 function createYoutubeClient() {
   const oauth2Client = new google.auth.OAuth2(
@@ -43,44 +44,32 @@ function createYoutubeClient() {
 }
 
 /**
- * @bref Upload une vidéo sur YouTube en mode unlisted
- * YouTube scanne automatiquement le contenu avec Content ID
- * @param {Express.Multer.File} file
- * @param {string} title
- * @returns {Promise<{youtubeVideoId: string}>}
+ * @brief Upload une vidéo sur YouTube en mode unlisted
+ * @param {Object} file - Fichier vidéo (buffer, mimetype, originalname)
+ * @param {string} title - Titre de la vidéo
+ * @returns {Promise<{youtubeVideoId: string}>} ID de la vidéo YouTube
  */
 async function uploadToYoutube(file, title) {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REFRESH_TOKEN) {
-    throw new AppError("Credentials Google OAuth2 manquants dans la configuration", 500);
+    throw new AppError("Credentials Google OAuth2 manquants", 500);
   }
 
   const youtube = createYoutubeClient();
 
-  let response;
-  try {
-    response = await youtube.videos.insert({
-      part: ["snippet", "status"],
-      requestBody: {
-        snippet: {
-          title: title || file.originalname,
-          description: "Vidéo uploadée pour vérification copyright",
-        },
-        status: { privacyStatus: "unlisted" },
+  const response = await youtube.videos.insert({
+    part: ["snippet", "status"],
+    requestBody: {
+      snippet: {
+        title: title || file.originalname,
+        description: "Vidéo uploadée pour vérification copyright",
       },
-      media: {
-        mimeType: file.mimetype,
-        body: Readable.from(file.buffer),
-      },
-    });
-  } catch (err) {
-    logger.error("YouTube upload failed", { 
-      error: err.message,
-      status: err.status,
-      code: err.code,
-      details: err.errors ? JSON.stringify(err.errors) : null
-    });
-    throw new AppError(`Échec de l'upload YouTube : ${err.message}`, 502);
-  }
+      status: { privacyStatus: "unlisted" },
+    },
+    media: {
+      mimeType: file.mimetype,
+      body: Readable.from(file.buffer),
+    },
+  });
 
   const youtubeVideoId = response.data.id;
   if (!youtubeVideoId) throw new AppError("YouTube n'a pas retourné d'ID vidéo", 502);
@@ -90,96 +79,84 @@ async function uploadToYoutube(file, title) {
 }
 
 /**
- * @bref Vérifie les droits d'auteur via YouTube Data API v3 (Content ID claims)
- * @param {string} youtubeVideoId
- * @returns {Promise<{safe: boolean, videoId: string}>}
+ * @brief Vérifie le copyright via YouTube Data API
+ * @param {string} youtubeVideoId - ID de la vidéo YouTube
+ * @returns {Promise<{safe: boolean, videoId: string}>} Résultat de la vérification
+ * @throws {AppError} Si copyright détecté (422) ou vidéo en traitement (503)
  */
 async function checkYoutubeCopyright(youtubeVideoId) {
   const apiKey = process.env.YOUTUBE_API_KEY;
-  if (!apiKey) throw new AppError("Clé YouTube API manquante dans la configuration", 500);
+  if (!apiKey) throw new AppError("Clé YouTube API manquante", 500);
 
   const url = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,status&id=${encodeURIComponent(youtubeVideoId)}&key=${apiKey}`;
+  const response = await fetch(url);
 
-  let response;
-  try {
-    response = await fetch(url);
-  } catch (err) {
-    logger.error("YouTube API unreachable", { error: err.message });
-    throw new AppError("Impossible de joindre l'API YouTube", 503);
-  }
-
-  if (!response.ok) {
-    logger.error("YouTube API error", { status: response.status });
-    throw new AppError(`Erreur YouTube API: ${response.status}`, 502);
-  }
+  if (!response.ok) throw new AppError(`Erreur YouTube API: ${response.status}`, 502);
 
   const data = await response.json();
+  if (!data.items?.length) throw new AppError("Vidéo YouTube introuvable", 422);
 
-  if (!data.items || data.items.length === 0) {
-    throw new AppError("Vidéo YouTube introuvable, privée ou supprimée", 422);
+  const { contentDetails, status } = data.items[0];
+  const licensedContent = contentDetails?.licensedContent === true;
+  const blockedRegions = contentDetails?.regionRestriction?.blocked || [];
+  const uploadStatus = status?.uploadStatus;
+
+  logger.info("Copyright check", {
+    youtubeVideoId,
+    licensedContent,
+    blockedRegionsCount: blockedRegions.length,
+    uploadStatus,
+  });
+
+  // Détection copyright
+  if (licensedContent) {
+    throw new AppError("Copyright détecté : licensedContent = true", 422);
   }
 
-  const { contentDetails } = data.items[0];
-
-  if (contentDetails?.licensedContent === true) {
-    logger.warn("Copyright claim detected", { youtubeVideoId });
-    throw new AppError("Cette vidéo fait l'objet d'une revendication de droits d'auteur (Content ID claim)", 422);
+  if (blockedRegions.length > 100) {
+    throw new AppError(`Copyright détecté : ${blockedRegions.length} pays bloqués (restriction de région)`, 422);
   }
 
-  logger.info("YouTube copyright check passed", { youtubeVideoId });
+  // Vidéo pas encore traitée → retry plus tard
+  if (uploadStatus === "uploaded") {
+    throw new AppError("Vidéo encore en cours de traitement par YouTube", 503);
+  }
+
   return { safe: true, videoId: youtubeVideoId };
 }
 
 // ─── Scaleway S3 ─────────────────────────────────────────────────────────────
 
 /**
- * @bref Liste toutes les vidéos dans le dossier du bucket Scaleway
- * @returns {Promise<Array>}
+ * @brief Liste toutes les vidéos dans le bucket Scaleway S3
+ * @returns {Promise<Array>} Liste des fichiers vidéo
  */
 async function listVideos() {
-  const command = new ListObjectsCommand({
-    Bucket: BUCKET_NAME,
-    Prefix: `${FOLDER}/`,
-  });
-
-  try {
-    const response = await s3Client.send(command);
-    const files = (response.Contents || []).map((item) => ({
-      key: item.Key,
-      size: item.Size,
-      lastModified: item.LastModified,
-      url: `${process.env.SCW_ENDPOINT}/${BUCKET_NAME}/${item.Key}`,
-    }));
-    logger.info("S3 list success", { count: files.length });
-    return files;
-  } catch (err) {
-    logger.error("S3 list failed", { error: err.message });
-    throw new AppError("Impossible de lister les vidéos S3", 500);
-  }
+  const command = new ListObjectsCommand({ Bucket: BUCKET_NAME, Prefix: `${FOLDER}/` });
+  const response = await s3Client.send(command);
+  return (response.Contents || []).map((item) => ({
+    key: item.Key,
+    size: item.Size,
+    lastModified: item.LastModified,
+    url: `${process.env.SCW_ENDPOINT}/${BUCKET_NAME}/${item.Key}`,
+  }));
 }
 
 /**
- * @bref Upload un fichier vidéo vers Scaleway S3
- * @param {Express.Multer.File} file
- * @returns {Promise<{s3Url: string, key: string}>}
+ * @brief Upload un fichier vidéo vers Scaleway S3
+ * @param {Express.Multer.File} file - Fichier vidéo
+ * @returns {Promise<{s3Url: string, key: string}>} URL S3 et clé du fichier
  */
 async function uploadToS3(file) {
   const ext = path.extname(file.originalname).toLowerCase();
   const uniqueKey = `${FOLDER}/${crypto.randomUUID()}${ext}`;
 
-  const command = new PutObjectCommand({
+  await s3Client.send(new PutObjectCommand({
     Bucket: BUCKET_NAME,
     Key: uniqueKey,
     Body: file.buffer,
     ContentType: file.mimetype,
-  });
-
-  try {
-    await s3Client.send(command);
-  } catch (err) {
-    logger.error("S3 upload failed", { error: err.message, key: uniqueKey });
-    throw new AppError("Échec de l'upload vers S3", 500);
-  }
+  }));
 
   const s3Url = `${process.env.SCW_ENDPOINT}/${BUCKET_NAME}/${uniqueKey}`;
   logger.info("S3 upload success", { key: uniqueKey });
@@ -187,48 +164,36 @@ async function uploadToS3(file) {
 }
 
 /**
- * @bref Télécharge une vidéo depuis Scaleway S3
+ * @brief Télécharge une vidéo depuis Scaleway S3
  * @param {string} key - Clé du fichier dans S3 (ex: grp1/uuid.mp4)
- * @returns {Promise<{stream: Readable, contentType: string}>}
+ * @returns {Promise<{stream: Readable, contentType: string, contentLength: number}>} Stream et métadonnées
  */
 async function downloadFromS3(key) {
-  const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  });
-
-  try {
-    const response = await s3Client.send(command);
-    logger.info("S3 download success", { key });
-    return {
-      stream: response.Body,
-      contentType: response.ContentType,
-      contentLength: response.ContentLength,
-    };
-  } catch (err) {
-    logger.error("S3 download failed", { error: err.message, key });
-    throw new AppError("Vidéo introuvable dans S3", 404);
-  }
+  const response = await s3Client.send(new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key }));
+  return {
+    stream: response.Body,
+    contentType: response.ContentType,
+    contentLength: response.ContentLength,
+  };
 }
 
 /**
- * @bref Supprime une vidéo depuis Scaleway S3
+ * @brief Supprime une vidéo depuis Scaleway S3
  * @param {string} key - Clé du fichier dans S3 (ex: grp1/uuid.mp4)
  * @returns {Promise<void>}
  */
 async function deleteFromS3(key) {
-  const command = new DeleteObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  });
+  await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: key }));
+  logger.info("S3 delete success", { key });
+}
 
-  try {
-    await s3Client.send(command);
-    logger.info("S3 delete success", { key });
-  } catch (err) {
-    logger.error("S3 delete failed", { error: err.message, key });
-    throw new AppError("Échec de la suppression dans S3", 500);
-  }
+/**
+ * @brief Calcule le hash SHA-256 du fichier pour détecter les doublons
+ * @param {Buffer} buffer - Contenu du fichier
+ * @returns {string} Hash hexadécimal (64 caractères)
+ */
+function computeFileHash(buffer) {
+  return crypto.createHash("sha256").update(buffer).digest("hex");
 }
 
 export default {
@@ -238,4 +203,5 @@ export default {
   uploadToS3,
   downloadFromS3,
   deleteFromS3,
+  computeFileHash,
 };
