@@ -1,268 +1,356 @@
-import { useTranslation } from "react-i18next";
-import { Eye, Heart, Film, Share2, Settings, MapPin, Clock, Users, Play, BadgeCheck, User } from "lucide-react";
-import { motion } from "motion/react";
 import { useState } from "react";
-
-// TODO: Remplacer par un appel API (ex: useQuery)
-const user = null;
-const submissions = [];
+import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
+import { motion } from "motion/react";
+import {
+  Settings, Share2, Heart, Eye, Film as FilmIcon,
+  Trophy, Calendar, MapPin, MoreHorizontal,
+  Grid3x3, Bookmark, Check,
+} from "lucide-react";
+import { filmsData } from "../../data/films-data";
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState("portfolio");
+  const [activeTab, setActiveTab] = useState("films");
+  const [isFollowing, setIsFollowing] = useState(false);
 
-  const tabs = [
-    { key: "portfolio", label: t("pages.profile.tabs.portfolio") },
-    { key: "favorites", label: t("pages.profile.tabs.favorites") },
-    { key: "bio", label: t("pages.profile.tabs.bio") },
-  ];
-
-  // Données avec fallback
-  const displayName = user?.name ?? "—";
-  const username = user?.username ? `@${user.username}` : "—";
-  const initials = user?.name
-    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
-    : null;
-  const bio = user?.bio ?? t("pages.profile.bio");
-  const location = user?.location ?? null;
-  const joinedAt = user?.joinedAt ?? null;
-  const isVerified = user?.verified ?? false;
-  const subscribersCount = user?.subscribers ?? 0;
-  const subscriptionsCount = user?.subscriptions ?? 0;
-  const filmsCount = user?.films ?? 0;
-  const applauseCount = user?.applause ?? 0;
-  const viewsCount = user?.views ?? 0;
-
-  const formatNumber = (n) => {
-    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-    return String(n);
+  // Données utilisateur simulées (à remplacer par l'API)
+  const userData = {
+    name: "Alex Chen",
+    username: "alexchen",
+    bio: t("pages.profile.bio"),
+    country: t("pages.profile.location"),
+    joinDate: t("pages.profile.since"),
+    avatar: "AC",
+    followers: 12400,
+    following: 342,
+    totalLikes: 45800,
+    totalViews: 287500,
+    verified: true,
   };
 
+  const userFilms = filmsData.filter((film) => film.director === userData.name);
+
+  const formatNumber = (num) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+    return num.toString();
+  };
+
+  const tabs = [
+    { id: "films",     label: t("pages.profile.tabs.portfolio"), icon: Grid3x3 },
+    { id: "favorites", label: t("pages.profile.tabs.favorites"), icon: Bookmark },
+    { id: "about",     label: t("pages.profile.tabs.bio"),       icon: MoreHorizontal },
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto pb-40 space-y-5">
-      {/* Cover / Banner */}
-      <div className="relative h-40 sm:h-48 md:h-56 rounded-b-[24px] md:rounded-b-[32px] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a103d] via-[#0f1a3a] to-[#0a0a1a]" />
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#51A2FF]/10 to-transparent" />
-        <svg className="absolute bottom-0 left-0 right-0 w-full" viewBox="0 0 400 60" preserveAspectRatio="none">
-          <path d="M0,60 Q100,10 200,35 T400,20 L400,60 Z" fill="rgba(81,162,255,0.08)" />
-          <path d="M0,60 Q150,25 250,45 T400,30 L400,60 Z" fill="rgba(168,85,247,0.06)" />
-        </svg>
-      </div>
+    <div className="min-h-screen text-foreground pb-32 -mt-[88px] md:-mt-[120px]">
+      {/* ── Cover Banner ── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="h-48 md:h-72 relative overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-[#030213] via-purple-900/40 to-background" />
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&fit=crop')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#51A2FF]/20 rounded-full blur-[100px]" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]" />
+      </motion.div>
 
-      {/* Avatar + Nom + Actions */}
-      <div className="px-4 -mt-14 sm:-mt-16 relative z-10">
-        <div className="flex flex-col items-center text-center gap-2 sm:gap-3">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        {/* ── Avatar & Actions ── */}
+        <div className="flex flex-col md:flex-row items-center md:items-end gap-6 -mt-16 md:-mt-20 mb-10 relative z-10">
           {/* Avatar */}
-          <div className="relative">
-            <div className="w-22 h-22 sm:w-28 sm:h-28 rounded-full p-[3px] bg-gradient-to-br from-[#A855F7] to-[#51A2FF]">
-              <div className="w-full h-full rounded-full bg-[#1a1a2e] flex items-center justify-center overflow-hidden">
-                {user?.avatar ? (
-                  <img src={user.avatar} alt={displayName} className="w-full h-full object-cover" />
-                ) : initials ? (
-                  <span className="text-2xl sm:text-3xl font-black text-white">{initials}</span>
-                ) : (
-                  <User className="w-8 h-8 sm:w-10 sm:h-10 text-white/30" />
-                )}
-              </div>
-            </div>
-            {isVerified && (
-              <div className="absolute bottom-1 right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#51A2FF] flex items-center justify-center border-2 border-[#1a1a2e]">
-                <BadgeCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-              </div>
-            )}
-          </div>
-
-          {/* Nom + username */}
-          <div>
-            <h2 className="text-white text-xl sm:text-2xl font-black tracking-tight">{displayName}</h2>
-            <p className="text-[#51A2FF] text-xs sm:text-sm font-semibold">{username}</p>
-          </div>
-
-          {/* Boutons */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button className="px-6 sm:px-8 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-[#A855F7] to-[#51A2FF] text-white text-xs sm:text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all cursor-pointer">
-              {t("pages.profile.follow")}
-            </button>
-            <button className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
-              <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-            <button className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
-              <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-4 space-y-4 sm:space-y-5">
-        {/* Biographie */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/[0.03] backdrop-blur-[40px] border border-white/10 rounded-[16px] sm:rounded-[20px] p-4 sm:p-5 relative overflow-hidden"
-        >
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-          <h3 className="text-white/40 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 sm:mb-3">
-            {t("pages.profile.biography")}
-          </h3>
-          <p className="text-white/70 text-xs sm:text-sm italic leading-relaxed">{bio}</p>
-          {(location || joinedAt) && (
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-3 sm:mt-4 text-white/40 text-[10px] sm:text-xs">
-              {location && (
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  {location}
-                </span>
-              )}
-              {joinedAt && (
-                <span className="flex items-center gap-1.5">
-                  <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  {joinedAt}
-                </span>
-              )}
-            </div>
-          )}
-        </motion.div>
-
-        {/* Audience */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-white/[0.03] backdrop-blur-[40px] border border-white/10 rounded-[16px] sm:rounded-[20px] p-4 sm:p-5 relative overflow-hidden"
-        >
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-          <h3 className="text-white/40 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
-            <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            {t("pages.profile.audience")}
-          </h3>
-          <div className="flex items-center gap-4 sm:gap-6">
-            <div>
-              <span className="text-white text-lg sm:text-xl font-black">{formatNumber(subscribersCount)}</span>
-              <span className="text-white/40 text-[10px] sm:text-xs ml-1 sm:ml-1.5">{t("pages.profile.subscribers")}</span>
-            </div>
-            <div className="w-px h-5 sm:h-6 bg-white/10" />
-            <div>
-              <span className="text-white text-lg sm:text-xl font-black">{formatNumber(subscriptionsCount)}</span>
-              <span className="text-white/40 text-[10px] sm:text-xs ml-1 sm:ml-1.5">{t("pages.profile.subscriptions")}</span>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Statistiques */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3"
-        >
-          <div className="relative rounded-[12px] sm:rounded-[16px] p-3 sm:p-4 overflow-hidden bg-gradient-to-br from-[#2a1a4e] to-[#1a1035] border border-purple-500/20 flex items-center gap-3 sm:block">
-            <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center shrink-0 sm:hidden">
-              <Film className="w-5 h-5 text-purple-400/60" />
-            </div>
-            <Film className="absolute -bottom-2 -right-2 w-16 h-16 text-purple-500/10 hidden sm:block" />
-            <div>
-              <p className="text-white text-lg sm:text-2xl font-black">{formatNumber(filmsCount)}</p>
-              <p className="text-white/50 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mt-0.5 sm:mt-1 leading-tight">
-                {t("pages.profile.stats.films")}
-              </p>
-            </div>
-          </div>
-
-          <div className="relative rounded-[12px] sm:rounded-[16px] p-3 sm:p-4 overflow-hidden bg-gradient-to-br from-[#3a1a3e] to-[#2a1030] border border-pink-500/20 flex items-center gap-3 sm:block">
-            <div className="w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center shrink-0 sm:hidden">
-              <Heart className="w-5 h-5 text-pink-400/60" />
-            </div>
-            <Heart className="absolute -bottom-2 -right-2 w-16 h-16 text-pink-500/10 hidden sm:block" />
-            <div>
-              <p className="text-white text-lg sm:text-2xl font-black">{formatNumber(applauseCount)}</p>
-              <p className="text-white/50 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mt-0.5 sm:mt-1 leading-tight">
-                {t("pages.profile.stats.applause")}
-              </p>
-            </div>
-          </div>
-
-          <div className="relative rounded-[12px] sm:rounded-[16px] p-3 sm:p-4 overflow-hidden bg-gradient-to-br from-[#1a2a4e] to-[#101a35] border border-blue-500/20 flex items-center gap-3 sm:block">
-            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0 sm:hidden">
-              <Eye className="w-5 h-5 text-blue-400/60" />
-            </div>
-            <Eye className="absolute -bottom-2 -right-2 w-16 h-16 text-blue-500/10 hidden sm:block" />
-            <div>
-              <p className="text-white text-lg sm:text-2xl font-black">{formatNumber(viewsCount)}</p>
-              <p className="text-white/50 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mt-0.5 sm:mt-1 leading-tight">
-                {t("pages.profile.stats.views")}
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Onglets */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <div className="flex items-center gap-1 bg-white/[0.03] backdrop-blur-[40px] border border-white/10 rounded-full p-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 py-2 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeTab === tab.key
-                    ? "bg-gradient-to-r from-[#A855F7] to-[#51A2FF] text-white shadow-lg"
-                    : "text-white/40 hover:text-white/70"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Contenu Portfolio */}
-        {activeTab === "portfolio" && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", damping: 15 }}
+            className="relative shrink-0"
           >
-            {submissions.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {submissions.map((sub) => (
-                  <div
-                    key={sub.id}
-                    className="bg-white/[0.03] backdrop-blur-[40px] border border-white/10 rounded-[16px] sm:rounded-[20px] overflow-hidden group cursor-pointer hover:border-[#51A2FF]/30 transition-all"
-                  >
-                    <div className="relative aspect-video bg-gradient-to-br from-[#2a1a4e] via-[#1a2a4e] to-[#0a0a1a] flex items-center justify-center">
-                      {sub.thumbnail && (
-                        <img src={sub.thumbnail} alt={sub.title} className="absolute inset-0 w-full h-full object-cover" />
-                      )}
-                      <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 group-hover:scale-110 transition-all">
-                        <Play className="w-5 h-5 sm:w-6 sm:h-6 text-white ml-0.5" />
-                      </div>
-                    </div>
-                    <div className="p-3 sm:p-4">
-                      <p className="text-white font-bold text-xs sm:text-sm truncate">{sub.title}</p>
-                      <div className="flex items-center gap-3 mt-1.5 sm:mt-2 text-white/40 text-[10px] sm:text-xs">
-                        <span className="flex items-center gap-1">
-                          <Heart className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> {formatNumber(sub.likes ?? 0)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Eye className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> {formatNumber(sub.views ?? 0)} {t("pages.profile.views")}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-full blur-xl opacity-40 animate-pulse" />
+            <div className="w-32 h-32 md:w-44 md:h-44 rounded-full bg-[#111] p-1.5 border-4 border-[#050505] relative overflow-hidden">
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-cyan-600 to-purple-700 flex items-center justify-center text-4xl md:text-5xl font-black shadow-inner">
+                {userData.avatar}
               </div>
-            ) : (
-              <div className="text-center py-12 sm:py-16">
-                <Film className="w-10 h-10 sm:w-12 sm:h-12 text-white/10 mx-auto mb-3" />
-                <p className="text-white/30 text-xs sm:text-sm">{t("pages.profile.noSubmissions")}</p>
+            </div>
+            {userData.verified && (
+              <div className="absolute bottom-2 right-2 md:bottom-3 md:right-3 bg-cyan-500 rounded-full p-1.5 md:p-2 border-4 border-[#050505] shadow-xl">
+                <Check className="w-3 h-3 md:w-4 md:h-4 text-white" strokeWidth={3} />
               </div>
             )}
           </motion.div>
-        )}
+
+          {/* Nom + boutons */}
+          <div className="flex-1 flex flex-col md:flex-row items-center md:items-end justify-between gap-4 w-full pb-2">
+            <div className="text-center md:text-left">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter uppercase">
+                {userData.name}
+              </h1>
+              <p className="text-cyan-400 font-bold text-base sm:text-lg mt-1">
+                @{userData.username}
+              </p>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex gap-2 sm:gap-3"
+            >
+              <button
+                onClick={() => setIsFollowing(!isFollowing)}
+                className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${
+                  isFollowing
+                    ? "bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                    : "bg-white text-black hover:bg-cyan-400 shadow-xl shadow-white/5"
+                }`}
+              >
+                {isFollowing ? "Abonné" : t("pages.profile.follow")}
+              </button>
+
+              <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all group">
+                <Share2 className="w-4 h-4 sm:w-5 sm:h-5 group-hover:text-cyan-400" />
+              </button>
+
+              <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
+                <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* ── Bio & Audience ── */}
+        <div className="grid lg:grid-cols-3 gap-8 lg:gap-12 mb-12 lg:mb-16">
+          <div className="lg:col-span-2">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-4">
+              {t("pages.profile.biography")}
+            </h2>
+            <p className="text-white/70 text-base sm:text-lg leading-relaxed font-light mb-6 italic">
+              {userData.bio}
+            </p>
+            <div className="flex flex-wrap gap-4 sm:gap-6 text-xs sm:text-sm font-black uppercase tracking-widest text-white/40">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-cyan-500" />
+                {userData.country}
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-purple-500" />
+                {userData.joinDate}
+              </div>
+            </div>
+          </div>
+
+          {/* Audience card */}
+          <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 sm:p-8 backdrop-blur-md relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-6">
+              {t("pages.profile.audience")}
+            </h2>
+            <div className="grid grid-cols-2 gap-6 sm:gap-8">
+              <div>
+                <div className="text-2xl sm:text-3xl font-black tracking-tighter mb-1">
+                  {formatNumber(userData.followers)}
+                </div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-white/30">
+                  {t("pages.profile.subscribers")}
+                </div>
+              </div>
+              <div>
+                <div className="text-2xl sm:text-3xl font-black tracking-tighter mb-1">
+                  {formatNumber(userData.following)}
+                </div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-white/30">
+                  {t("pages.profile.subscriptions")}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Stats Cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12 lg:mb-16">
+          {[
+            {
+              icon: FilmIcon,
+              value: userFilms.length,
+              label: t("pages.profile.stats.films"),
+              gradient: "from-cyan-600/20 to-cyan-900/10",
+              border: "border-cyan-500/20",
+              text: "text-cyan-400",
+            },
+            {
+              icon: Heart,
+              value: formatNumber(userData.totalLikes),
+              label: t("pages.profile.stats.applause"),
+              gradient: "from-pink-600/20 to-pink-900/10",
+              border: "border-pink-500/20",
+              text: "text-pink-400",
+            },
+            {
+              icon: Eye,
+              value: formatNumber(userData.totalViews),
+              label: t("pages.profile.stats.views"),
+              gradient: "from-purple-600/20 to-purple-900/10",
+              border: "border-purple-500/20",
+              text: "text-purple-400",
+            },
+          ].map((stat, idx) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * idx }}
+              className={`rounded-[2rem] p-6 sm:p-8 border ${stat.border} bg-gradient-to-br ${stat.gradient} backdrop-blur-xl relative overflow-hidden group`}
+            >
+              <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <stat.icon className="w-20 h-20 sm:w-24 sm:h-24" />
+              </div>
+              <stat.icon className={`w-5 h-5 sm:w-6 sm:h-6 mb-4 ${stat.text}`} />
+              <div className="text-3xl sm:text-4xl font-black tracking-tighter mb-1">{stat.value}</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">{stat.label}</div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* ── Tabs ── */}
+        <div className="mb-10 sm:mb-12">
+          <div className="flex bg-white/5 p-1.5 rounded-3xl border border-white/10 backdrop-blur-md max-w-xs sm:max-w-md mx-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-3 sm:py-3.5 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                  activeTab === tab.id
+                    ? "bg-white text-black shadow-xl"
+                    : "text-white/40 hover:text-white"
+                }`}
+              >
+                <tab.icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Tab Content ── */}
+        <div className="min-h-[400px] pb-8">
+          {/* Portfolio */}
+          {activeTab === "films" && userFilms.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {userFilms.map((film, idx) => (
+                <motion.div
+                  key={film.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.05 }}
+                  whileHover={{ y: -8 }}
+                  onClick={() => navigate(`/film/${film.id}`)}
+                  className="aspect-[4/5] relative cursor-pointer group rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 shadow-2xl"
+                >
+                  <img
+                    src={film.thumbnail}
+                    alt={film.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 sm:p-6">
+                    <h3 className="font-black text-sm sm:text-lg uppercase tracking-tight mb-1 sm:mb-2">
+                      {film.title}
+                    </h3>
+                    <div className="flex items-center gap-3 sm:gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-tighter">
+                      <div className="flex items-center gap-1">
+                        <Heart className="w-3 h-3 text-pink-500 fill-pink-500" />
+                        {formatNumber(film.likes)}
+                      </div>
+                      <div className="flex items-center gap-1 text-cyan-400">
+                        <Eye className="w-3 h-3" />
+                        {formatNumber(film.views)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rank badge */}
+                  {film.rank && film.rank <= 10 && (
+                    <div className="absolute top-3 right-3 bg-pink-500 rounded-xl px-2 py-1 text-[8px] sm:text-[9px] font-black text-white flex items-center gap-1 shadow-xl">
+                      <Trophy className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                      #{film.rank}
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {/* Portfolio vide */}
+          {activeTab === "films" && userFilms.length === 0 && (
+            <div className="text-center py-20 sm:py-24 bg-white/[0.02] border border-dashed border-white/10 rounded-[3rem]">
+              <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-cyan-500/10 to-purple-500/10 flex items-center justify-center mx-auto mb-6 sm:mb-8">
+                <FilmIcon className="w-8 h-8 sm:w-10 sm:h-10 text-white/20" />
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-black mb-3 sm:mb-4 tracking-tighter uppercase">
+                {t("pages.profile.noSubmissions")}
+              </h3>
+              <button
+                onClick={() => navigate("/soumission")}
+                className="bg-white text-black font-black uppercase tracking-widest py-3 sm:py-4 px-8 sm:px-10 rounded-2xl hover:bg-cyan-400 transition-all shadow-xl text-xs"
+              >
+                Créer un film
+              </button>
+            </div>
+          )}
+
+          {/* Favoris */}
+          {activeTab === "favorites" && (
+            <div className="text-center py-24 sm:py-32 opacity-40">
+              <Heart className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-6 text-pink-500" strokeWidth={1} />
+              <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tighter">Collection vide</h3>
+              <p className="text-sm font-medium mt-2">Aimez des films pour les retrouver ici.</p>
+            </div>
+          )}
+
+          {/* Bio détaillée */}
+          {activeTab === "about" && (
+            <div className="max-w-3xl mx-auto">
+              <div className="bg-white/[0.02] border border-white/10 rounded-[2.5rem] p-8 sm:p-10 md:p-16">
+                <div className="grid md:grid-cols-2 gap-10 md:gap-16">
+                  <div>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-6 sm:mb-8">
+                      Informations
+                    </h3>
+                    <div className="space-y-5 sm:space-y-6">
+                      {[
+                        { label: "Localisation", value: userData.country },
+                        { label: "Membre depuis", value: userData.joinDate },
+                        { label: "Statut", value: userData.verified ? "Vérifié ✓" : "Standard" },
+                        { label: "Films publiés", value: userFilms.length },
+                      ].map((item) => (
+                        <div key={item.label} className="flex flex-col border-b border-white/5 pb-4">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-1">
+                            {item.label}
+                          </span>
+                          <span className="font-bold text-base sm:text-lg">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30 mb-6 sm:mb-8">
+                      Bio Détaillée
+                    </h3>
+                    <p className="text-white/60 leading-relaxed font-light text-base sm:text-lg">
+                      {userData.bio}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

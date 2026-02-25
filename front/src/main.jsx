@@ -7,7 +7,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "./styles/index.css";
-import Home from "./pages/public/Home.jsx";
+import { LandingPage } from "./pages/public/Home.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import AdminUsersPage from "./pages/admin/Users.jsx";
 import Submissions from "./pages/admin/Submissions.jsx";
@@ -23,13 +23,14 @@ import PublicLayout from "./layouts/PublicLayout.jsx";
 import { Login } from "./pages/auth/Login.jsx";
 import { Register } from "./pages/auth/Register.jsx";
 import { RoleGuard } from "./middlewares/RoleGuard.jsx";
-import Agenda from "./pages/public/Agenda.jsx";
 import Discover from "./pages/public/Discover.jsx";
 import Competition from "./pages/public/Competition.jsx";
 import Profile from "./pages/public/Profile.jsx";
 import JuryDashboard from "./pages/admin/JuryDashboard.jsx";
 import UploadPage from "./pages/public/Upload.jsx";
 import JuryVotePage from "./pages/jury/jury-page.jsx";
+import Detail from "./pages/public/Details.jsx";
+import { AgendaPage } from "./pages/public/Agenda.jsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,17 +48,19 @@ createRoot(document.getElementById("root")).render(
           <Routes>
             {/* Routes publiques */}
             <Route path="/" element={<PublicLayout />}>
-              <Route index element={<Home />} />
+              <Route index element={<LandingPage />} />
               <Route path="/auth/login" element={<Login />} />
               <Route path="/discover" element={<Discover />} />
               <Route path="/competition" element={<Competition />} />
-              <Route path="/Agenda" element={<Agenda />} />
+              <Route path="/Agenda" element={<AgendaPage />} />
               <Route path="/Profile" element={<Profile />} />
               <Route path="/auth/register" element={<Register />} />
               <Route path="/jury-dashboard" element={<JuryDashboard />} />
               <Route path="/upload" element={<UploadPage />} />
               <Route path="/jury/:filmId" element={<JuryVotePage />} />
               <Route path="/soumission" element={<UploadPage />} />
+                            <Route path="/film/:id" element={<Detail />} />
+
             </Route>
             {/* Routes admin */}
             <Route

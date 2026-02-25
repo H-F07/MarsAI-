@@ -24,7 +24,7 @@ import imgLogo3 from "../../assets/Image/368cd55c89c85ac47a6120fc0834c49ef2387ad
 import imgLogo4 from "../../assets/Image/3b0df5010436dc5724dcd4a8821d268af56caa7e.png";
 import imgLogo5 from "../../assets/Image/8bda8b1a311ace4c1ca756fc036b819a50be97fb.png";
 
-function Home({ onNavigate }) {
+export function LandingPage({ onNavigate }) {
   const { t } = useTranslation();
   
   return (
@@ -456,5 +456,3 @@ function StatCard({ value, label, color }) {
     </div>
   );
 }
-
-export default Home;
