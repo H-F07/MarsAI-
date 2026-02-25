@@ -73,7 +73,7 @@ export default function Discover() {
   };
 
   return (
-    <div className="min-h-screen text-foreground pb-10">
+    <div className="min-h-screen text-foreground pb-10 pt-8">
       {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none -z-10">
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-purple-600/5 rounded-full blur-[120px]" />

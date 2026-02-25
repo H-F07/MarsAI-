@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Home, Trophy, Calendar, User, UserPlus, Menu, X, LogIn, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -5,6 +6,8 @@ import { useNavigate, useLocation } from "react-router";
 import { NotificationDropdown } from "../components/NotificationDropdown.jsx";
 
 export function TopBar() {
+  const { t, i18n } = useTranslation();
+
   /* Etat pour gerer l'ouverture et la fermeture du menu mobile */
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,7 +38,7 @@ export function TopBar() {
   /* matrix de navigation */
   const navItems = [
     { path: '/discover', icon: Search, label: 'Découvrir' },
-    { path: '/', icon: Home, label: 'Feed' },
+    { path: '/', icon: Home, label: 'Home' },
     { path: '/competition', icon: Trophy, label: 'Concours' },
     { path: '/agenda', icon: Calendar, label: 'Agenda' },
     { path: '/profile', icon: User, label: 'Profil' },
@@ -94,6 +97,29 @@ export function TopBar() {
                 )}
               </button>
             ))}
+          </div>
+
+          <div className="hidden md:flex items-center gap-3">
+            {/* Language switcher */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => i18n.changeLanguage("fr")}
+                className={`text-xs font-bold uppercase tracking-wider transition-colors ${
+                  i18n.language === "fr" ? "text-white" : "text-white/40 hover:text-white"
+                }`}
+              >
+                {t("lang.fr")}
+              </button>
+              <span className="text-white/20">|</span>
+              <button
+                onClick={() => i18n.changeLanguage("en")}
+                className={`text-xs font-bold uppercase tracking-wider transition-colors ${
+                  i18n.language === "en" ? "text-white" : "text-white/40 hover:text-white"
+                }`}
+              >
+                {t("lang.en")}
+              </button>
+            </div>
           </div>
 
           {/* Desktop Auth Buttons - Hidden on mobile */}
@@ -179,6 +205,27 @@ export function TopBar() {
                     )}
                   </button>
                 ))}
+              </div>
+
+               {/* Mobile Lang Switch */}
+              <div className="border-t border-white/10 p-4 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => { i18n.changeLanguage("fr"); setIsMenuOpen(false); }}
+                  className={`text-xs font-bold uppercase tracking-wider transition-colors ${
+                    i18n.language === "fr" ? "text-white" : "text-white/40 hover:text-white"
+                  }`}
+                >
+                  {t("lang.fr")}
+                </button>
+                <span className="text-white/20">|</span>
+                <button
+                  onClick={() => { i18n.changeLanguage("en"); setIsMenuOpen(false); }}
+                  className={`text-xs font-bold uppercase tracking-wider transition-colors ${
+                    i18n.language === "en" ? "text-white" : "text-white/40 hover:text-white"
+                  }`}
+                >
+                  {t("lang.en")}
+                </button>
               </div>
 
               {/* Auth Buttons */}
