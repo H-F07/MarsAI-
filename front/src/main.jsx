@@ -31,12 +31,12 @@ import UploadPage from "./pages/public/Upload.jsx";
 import JuryVotePage from "./pages/jury/jury-page.jsx";
 import Detail from "./pages/public/Details.jsx";
 import { AgendaPage } from "./pages/public/Agenda.jsx";
+// TON IMPORT STUDIO
+import EditorStudio from "./pages/public/EditorStudio.jsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      staleTime: Infinity,
-    },
+    queries: { staleTime: Infinity },
   },
 });
 
@@ -46,7 +46,6 @@ createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <Routes>
-            {/* Routes publiques */}
             <Route path="/" element={<PublicLayout />}>
               <Route index element={<LandingPage />} />
               <Route path="/auth/login" element={<Login />} />
@@ -54,23 +53,16 @@ createRoot(document.getElementById("root")).render(
               <Route path="/competition" element={<Competition />} />
               <Route path="/Agenda" element={<AgendaPage />} />
               <Route path="/Profile" element={<Profile />} />
+              {/* MODIFICATION ICI : Ajout du ? pour rendre l'ID optionnel */}
+              <Route path="/editor-studio/:id?" element={<EditorStudio />} />
               <Route path="/auth/register" element={<Register />} />
               <Route path="/jury-dashboard" element={<JuryDashboard />} />
               <Route path="/upload" element={<UploadPage />} />
               <Route path="/jury/:filmId" element={<JuryVotePage />} />
               <Route path="/soumission" element={<UploadPage />} />
-                            <Route path="/film/:id" element={<Detail />} />
-
+              <Route path="/film/:id" element={<Detail />} />
             </Route>
-            {/* Routes admin */}
-            <Route
-              path="admin"
-              element={
-                <RoleGuard allowedRoles={["ADMIN"]}>
-                  <AdminLayout />
-                </RoleGuard>
-              }
-            >
+            <Route path="admin" element={<RoleGuard allowedRoles={["ADMIN"]}><AdminLayout /></RoleGuard>}>
               <Route index element={<Dashboard />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="submissions" element={<Submissions />} />
@@ -87,5 +79,5 @@ createRoot(document.getElementById("root")).render(
         </QueryClientProvider>
       </BrowserRouter>
     </I18nextProvider>
-  </StrictMode>,
+  </StrictMode>
 );

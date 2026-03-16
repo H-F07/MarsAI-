@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import {
   Settings, Share2, Heart, Eye, Film as FilmIcon,
   Trophy, Calendar, MapPin, MoreHorizontal,
-  Grid3x3, Bookmark, Check,
+  Grid3x3, Bookmark, Check, Pencil // AJOUT DE PENCIL ICI
 } from "lucide-react";
 import { filmsData } from "../../data/films-data";
 
@@ -248,8 +248,7 @@ export default function Profile() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.05 }}
                   whileHover={{ y: -8 }}
-                  onClick={() => navigate(`/film/${film.id}`)}
-                  className="aspect-[4/5] relative cursor-pointer group rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 shadow-2xl"
+                  className="aspect-[4/5] relative group rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden border border-white/10 bg-white/5 shadow-2xl cursor-pointer"
                 >
                   <img
                     src={film.thumbnail}
@@ -257,21 +256,17 @@ export default function Profile() {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
 
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 sm:p-6">
-                    <h3 className="font-black text-sm sm:text-lg uppercase tracking-tight mb-1 sm:mb-2">
-                      {film.title}
-                    </h3>
-                    <div className="flex items-center gap-3 sm:gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-tighter">
-                      <div className="flex items-center gap-1">
-                        <Heart className="w-3 h-3 text-pink-500 fill-pink-500" />
-                        {formatNumber(film.likes)}
-                      </div>
-                      <div className="flex items-center gap-1 text-cyan-400">
-                        <Eye className="w-3 h-3" />
-                        {formatNumber(film.views)}
-                      </div>
-                    </div>
+                  {/* Bouton d'édition rond dégradé en haut à gauche - AVEC CRAYON */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/editor-studio/${film.id}`);
+                      }}
+                      className="absolute top-4 left-4 w-11 h-11 rounded-full bg-gradient-to-br from-[#A855F7] to-[#51A2FF] flex items-center justify-center text-white shadow-2xl transform scale-90 group-hover:scale-100 hover:scale-110 transition-all duration-300 z-10"
+                    >
+                      <Pencil className="w-5 h-5" />
+                    </button>
                   </div>
 
                   {/* Rank badge */}
